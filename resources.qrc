@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/validadores_plugin" >
+        <file>icon_plugin.ico</file>
+    </qresource>
+</RCC>

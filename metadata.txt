@@ -1,0 +1,20 @@
+[general]
+name=Validadores
+qgisMinimumVersion=3.0
+description=Este plugin realiza validaciones en GeoPackages
+version=1.0
+author=Sonia Elizabeth Eraso
+colaborador=Andres Felipe Osorio Bastidas
+email=elizabeth.eraso@igac.gov.co & andres.osorio@igac.gov.co
+
+about=Proporciona funcionalidades para validar y procesar GeoPackages
+
+repository=https://github.com/Gisdeveloper95/Pluging_ETL_Transformacion_IGAC_LADMCOL/upload/main
+tags=python,geopackage,validación
+
+
+category=Vector
+icon=icon_plugin.ico
+
+experimental=True
+deprecated=False
