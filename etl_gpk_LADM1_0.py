@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from qgis.core import QgsProcessing, QgsProcessingAlgorithm, QgsProcessingMultiStepFeedback, QgsProcessingParameterFile, QgsProcessingParameterFileDestination
+from qgis.core import QgsProcessing,QgsCoordinateReferenceSystem, QgsProcessingAlgorithm, QgsProcessingMultiStepFeedback, QgsProcessingParameterFile, QgsProcessingParameterFileDestination
 import processing
 import os
 
@@ -42,7 +42,9 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
         feedback = QgsProcessingMultiStepFeedback(3, feedback)
         results = {}
         outputs = {}
-
+        
+        # Define CRS 9377
+        crs = QgsCoordinateReferenceSystem('EPSG:9377')
         # Verificación de rutas
         feedback.pushInfo(f"Archivo de entrada: {input_gpkg}")
         feedback.pushInfo(f"Archivo de salida: {output_gpkg}")
@@ -78,6 +80,12 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
         def layer_path(layer_name):
             return f"{input_gpkg}|layername={layer_name}"
 
+        # Modified to include CRS in output for geometric layers
+        def create_output_path(table_name, geom=True):
+            if geom:
+                return f'ogr:dbname=\'{output_gpkg}\' table="{table_name}" (geom) sql='
+            return f'ogr:dbname=\'{output_gpkg}\' table="{table_name}"'
+        
         # Unir atributos por valor de campo - Construccion
         alg_params = {
             'DISCARD_NONMATCHING': False,
@@ -117,7 +125,8 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
         alg_params = {
             'EXPRESSION': ' "T_Id" is not NULL',
             'INPUT': layer_path(layer_mapping['seleccioneterreno (2) (4)']),
-            'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="CC_Perimetro_Urbano" (geom)'
+            'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="CC_Perimetro_Urbano" (geom)',
+            'TARGET_CRS': crs
 
         }
         outputs['ExtraerPorExpresin'] = processing.run('native:extractbyexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
@@ -131,7 +140,7 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'EXPRESSION': ' "T_Id" is not NULL',
             'INPUT': layer_path(layer_mapping['seleccioneterreno (2) (2)']),
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="CC_Localidad_Comuna" (geom)',
-            
+            'TARGET_CRS': crs
         }
         outputs['ExtraerPorExpresin'] = processing.run('native:extractbyexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
@@ -144,7 +153,7 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'EXPRESSION': ' "T_Id" is not NULL',
             'INPUT': layer_path(layer_mapping['seleccioneterreno (2) (2) (2) (2) (2)']),
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="CC_Centro_Poblado" (geom)',
-            
+            'TARGET_CRS': crs
         }
         outputs['ExtraerPorExpresin'] = processing.run('native:extractbyexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
@@ -157,7 +166,7 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'EXPRESSION': ' "T_Id" is not NULL',
             'INPUT': layer_path(layer_mapping['seleccioneterreno (2) (2) (2) (3)']),
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="CC_Corregimiento" (geom)',
-            
+            'TARGET_CRS': crs
         }
         outputs['ExtraerPorExpresin'] = processing.run('native:extractbyexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
@@ -170,7 +179,7 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'EXPRESSION': ' "T_Id" is not NULL',
             'INPUT': layer_path(layer_mapping['seleccioneterreno (2) (2) (2)']),
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="CC_Sector_Urbano" (geom)',
-            
+            'TARGET_CRS': crs
         }
         outputs['ExtraerPorExpresin'] = processing.run('native:extractbyexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
@@ -201,7 +210,7 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'EXPRESSION': ' "T_Id" is not NULL',
             'INPUT': layer_path(layer_mapping['seleccioneterreno (2) (3) (2)']),
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="CC_Limite_Municipio" (geom)',
-            
+            'TARGET_CRS': crs
         }
         outputs['ExtraerPorExpresin'] = processing.run('native:extractbyexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
@@ -214,7 +223,7 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'EXPRESSION': ' "T_Id" is not NULL',
             'INPUT': layer_path(layer_mapping['seleccioneterreno (2) (2) (2) (2)']),
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="CC_Sector_Rural" (geom)',
-            
+            'TARGET_CRS': crs
         }
         outputs['ExtraerPorExpresin'] = processing.run('native:extractbyexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
@@ -237,7 +246,7 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'EXPRESSION': ' "T_Id" is not NULL',
             'INPUT': layer_path(layer_mapping['seleccioneterreno (2) (2) (3)']),
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="CC_Manzana" (geom)',
-            
+            'TARGET_CRS': crs
         }
         outputs['ExtraerPorExpresin'] = processing.run('native:extractbyexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
@@ -256,7 +265,8 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'INPUT_2': layer_path(layer_mapping['seleccionetablapredio']),
             'METHOD': 1,
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="LC_Construccion" (geom)',
-            'PREFIX': ''
+            'PREFIX': '',
+            'TARGET_CRS': crs
         }
 
         outputs['UnirAtributosPorValorDeCampo'] = processing.run('native:joinattributestable', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
@@ -308,7 +318,8 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'INPUT_2': layer_path(layer_mapping['seleccionetablapredio']),
             'METHOD': 1,
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="LC_UnidadDeConstruccion" (geom)',
-            'PREFIX': ''
+            'PREFIX': '',
+            'TARGET_CRS': crs
         }
 
         outputs['UnirAtributosPorValorDeCampo_unidad'] = processing.run('native:joinattributestable', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
@@ -360,6 +371,7 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'EXPRESSION': ' "T_Id" is not NULL',
             'INPUT': layer_path(layer_mapping['seleccioneterreno (2) (3)']),
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="CC_Vereda" (geom)',
+            'TARGET_CRS': crs
             
         }
         outputs['ExtraerPorExpresin'] = processing.run('native:extractbyexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
@@ -392,7 +404,7 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'EXPRESSION': ' "T_Id" is not NULL',
             'INPUT': layer_path(layer_mapping['seleccioneterreno (2)']),
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="CC_Barrio" (geom)',
-            
+            'TARGET_CRS': crs
         }
         outputs['ExtraerPorExpresin'] = processing.run('native:extractbyexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
@@ -423,7 +435,8 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
         alg_params = {
             'EXPRESSION': ' "T_Id" is not NULL',
             'INPUT': outputs['UnirAtributosPorValorDeCampo_dir']['OUTPUT'],
-            'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="Direccion" (geom)'
+            'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="Direccion" (geom)',
+            'TARGET_CRS': crs
         }
         
         outputs['ExtraerPorExpresin'] = processing.run('native:extractbyexpression', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
@@ -442,7 +455,7 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'METHOD': 1,  # Tomar solo los atributos del primer objeto coincidente (uno a uno)
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="LC_Terreno" (geom)',
             'PREFIX': '',
-            
+            'TARGET_CRS': crs
         }
         outputs['UnirAtributosPorValorDeCampo_terreno'] = processing.run('native:joinattributestable', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
@@ -459,15 +472,28 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'INPUT': outputs['UnirAtributosPorValorDeCampo_terreno']['OUTPUT'],
             'INPUT_2': layer_path(layer_mapping['seleccionetablapredio (2)']),
             'METHOD': 1,  # Tomar solo los atributos del primer objeto coincidente (uno a uno)
-            'OUTPUT': 'TEMPORARY_OUTPUT',
+            'OUTPUT': 'memory:derecho_temp',
             'PREFIX': '',
             
         }
-        outputs['UnirAtributosPorValorDeCampo_derecho'] = processing.run('native:joinattributestable', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        outputs['temp_derecho'] = processing.run('native:joinattributestable', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
         feedback.setCurrentStep(20)
         if feedback.isCanceled():
             return {}
+        
+        # Crear expresión para ajustar tipo_2 para LC_Derecho
+        alg_params = {
+            'FIELD_LENGTH': 0,
+            'FIELD_NAME': 'tipo',
+            'FIELD_PRECISION': 0,
+            'FIELD_TYPE': 1,  # Integer
+            'FORMULA': 'tipo',
+            'INPUT': outputs['temp_derecho']['OUTPUT'],
+            'OUTPUT': 'memory:derecho_ajustado'
+        }
+        outputs['derecho_ajustado'] = processing.run('native:fieldcalculator', alg_params, context=context, feedback=feedback)
+        
 
         # Unir atributos por valor de campo_derecho_tipo
         alg_params = {
@@ -479,7 +505,8 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'INPUT_2': layer_path(layer_mapping['seleccionetablapredio (2) (2) (2)']),
             'METHOD': 1,  # Tomar solo los atributos del primer objeto coincidente (uno a uno)
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="LC_Tipo_predio" (geom)\n',
-            'PREFIX': ''
+            'PREFIX': '',
+            'TARGET_CRS': crs
         }
         outputs['UnirAtributosPorValorDeCampo_derecho_tipo'] = processing.run('native:joinattributestable', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
 
@@ -493,13 +520,47 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             'FIELD': 'tipo',
             'FIELDS_TO_COPY': ['iliCode'],
             'FIELD_2': 'T_id',
-            'INPUT': outputs['UnirAtributosPorValorDeCampo_derecho']['OUTPUT'],
+            'INPUT': outputs['derecho_ajustado']['OUTPUT'],
             'INPUT_2': layer_path(layer_mapping['seleccionetablapredio (2) (2)']),
             'METHOD': 1,  # Tomar solo los atributos del primer objeto coincidente (uno a uno)
             'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="LC_Derecho" (geom)',
-            'PREFIX': ''
+            'PREFIX': '',
+            'TARGET_CRS': crs
         }
         outputs['UnirAtributosPorValorDeCampo_derecho_tipo'] = processing.run('native:joinattributestable', alg_params, context=context, feedback=feedback, is_child_algorithm=True)
+        feedback.setCurrentStep(22)
+        if feedback.isCanceled():
+            return {}
+        
+        # Consulta SQL para actualizar la columna ilicode
+        alg_params = {
+            'DATABASE': output_gpkg,
+            'SQL': '''
+            UPDATE LC_Derecho
+            SET ilicode = 
+                CASE 
+                    WHEN tipo_2 = 1 THEN 'Dominio'
+                    WHEN tipo_2 = 2 THEN 'Ocupación'
+                    WHEN tipo_2 = 3 THEN 'Posesión'
+                END
+            WHERE tipo_2 IN (1, 2, 3);
+            '''
+        }
+        processing.run("native:spatialiteexecutesql", alg_params, context=context, feedback=feedback)
+
+        # Consulta SQL para actualizar SRC
+        alg_params = {
+            'DATABASE': output_gpkg,
+            'SQL': '''
+            UPDATE gpkg_geometry_columns 
+            SET srs_id = 9377 
+            WHERE table_name LIKE 'CC_%' 
+            OR table_name LIKE 'LC_%' 
+            OR table_name = 'Direccion';
+            '''
+        }
+        processing.run("native:spatialiteexecutesql", alg_params, context=context, feedback=feedback)
+        
         return results
     
     def name(self):
