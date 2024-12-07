@@ -547,6 +547,36 @@ class ValidadoresLADM10(QgsProcessingAlgorithm):
             '''
         }
         processing.run("native:spatialiteexecutesql", alg_params, context=context, feedback=feedback)
+        
+        # Después del último SQL y antes del return results, añadir:
+
+        # Lista de capas a procesar
+        layers_to_fix = [
+            'CC_Manzana', 'CC_Vereda', 'CC_Barrio', 'CC_Centro_Poblado', 'CC_Corregimiento',
+            'CC_Limite_Municipio', 'CC_Localidad_Comuna', 'CC_Perimetro_Urbano', 'CC_Sector_Rural',
+            'CC_Sector_Urbano', 'Direccion', 'LC_Construccion', 'LC_Derecho', 'LC_Terreno',
+            'LC_Tipo_predio', 'LC_UnidadDeConstruccion'
+        ]
+
+        for layer_name in layers_to_fix:
+            input_layer = f"{output_gpkg}|layername={layer_name}"
+            
+            # Corregir geometrías
+            alg_params = {
+                'INPUT': input_layer,
+                'OUTPUT': 'memory:'
+            }
+            fixed_geom = processing.run('native:fixgeometries', alg_params, context=context, feedback=feedback)
+            
+            # Reproyectar a EPSG:9377
+            alg_params = {
+                'INPUT': fixed_geom['OUTPUT'],
+                'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:9377'),
+                'OUTPUT': f'ogr:dbname=\'{output_gpkg}\' table="{layer_name}" (geom)'
+            }
+            processing.run('native:reprojectlayer', alg_params, context=context, feedback=feedback)
+            
+            feedback.pushInfo(f'Capa {layer_name} procesada: geometrías corregidas y reproyectada a EPSG:9377')
 
         # Consulta SQL para actualizar SRC
         alg_params = {
